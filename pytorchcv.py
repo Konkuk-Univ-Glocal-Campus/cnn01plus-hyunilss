@@ -13,12 +13,13 @@ from PIL import Image
 import glob
 import os
 import zipfile 
-
+# gpu 있으면 cuda, 없으면 cpu
 default_device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 # Python에서 MNIST 데이터셋을 불러와서 처리하는 과정
 # 이 함수를 실행하면, builtins 모듈을 통해 전역 변수로 설정된 data_train, data_test, train_loader, test_loader가 생성되어 어디서든 접근할 수 있게 됩니다. 이러한 설정은 함수 내에서 데이터를 처리하고, 이후에 다른 부분에서 해당 데이터를 사용할 때 유용하게 활용될 수 있음
-
+#####################
+#fasionmnist 가져오는걸로 바꾸기, 로컬에 있으면 그걸 가져오고 아니면 pytorch에서 가져옴
 def load_mnist(batch_size=64): # load_mnist라는 이름의 함수를 정의하고, 이 함수는 기본적으로 batch_size 매개변수를 64로 설정합니다. 이 매개변수는 데이터를 얼마나 많은 단위로 나눌지 결정
     builtins.data_train = torchvision.datasets.MNIST('./data',
         download=True,train=True,transform=ToTensor()) # torchvision 라이브러리의 datasets 모듈을 사용하여 MNIST 데이터셋을 불러옵니다. './data'는 데이터셋이 저장될 경로를 지정하며, download=True는 해당 경로에 데이터가 없을 경우 인터넷에서 자동으로 다운로드하도록 설정합니다. train=True는 학습용 데이터셋을 불러오는 것을 의미하고, transform=ToTensor()는 데이터셋의 이미지들을 파이토치 텐서로 변환하는 함수를 적용
@@ -29,7 +30,8 @@ def load_mnist(batch_size=64): # load_mnist라는 이름의 함수를 정의하�
 
 # 신경망을 한 에폭(epoch) 동안 학습하는 과정을 구현한 Python 함수
 # 이 함수는 모델을 학습시키고, 각 배치에서의 평균 손실과 정확도를 계산하여 반환하는데 이를 통해 학습 과정을 모니터링할 수 있음
-
+# lr 0.01 or 0.001정도가 적당
+#train 모드에선 파라미터 값 변함 eval모드는 변하면 안된다
 def train_epoch(net,dataloader,lr=0.01,optimizer=None,loss_fn = nn.NLLLoss()): # 이 함수는 여러 매개변수를 받는데, net은 학습할 신경망 모델, dataloader는 데이터 로더, lr은 학습률(기본값 0.01), optimizer는 최적화 도구(기본값은 None), loss_fn은 손실 함수로 기본적으로 Negative Log Likelihood Loss를 사용
     optimizer = optimizer or torch.optim.Adam(net.parameters(),lr=lr) # 최적화 도구가 제공되지 않았다면, Adam 최적화 도구를 사용하여 신경망의 매개변수를 최적화하며, 학습률은 lr로 설정
     net.train() # 모델을 학습 모드로 설정합니다. 이는 일부 신경망 계층(예: 드롭아웃 계층)이 학습과 평가 모드에서 다르게 동작하기 때문에 필요
@@ -102,7 +104,8 @@ def train_long(net,train_loader,test_loader,epochs=5,lr=0.01,optimizer=None,loss
         print("Epoch {} done, validation acc = {}, validation loss = {}".format(epoch,va,vl)) # 에폭의 학습 결과와 검증 결과를 출력
 
 # 학습 및 검증 데이터에 대한 정확도와 손실을 시각화하는 Python 함수인데 Matplotlib 라이브러리를 사용하여 결과를 그래프로 표시
-
+#################
+# train vali, test test데이터를 따로 안만들어서 결과가 좀 다르게 나온다. acc가 test로 바꿔야한다.
 def plot_results(hist): # plot_results라는 함수를 정의하는데 hist라는 이름의 딕셔너리를 매개변수로 받는데 학습과 검증 과정의 정확도와 손실이 배열 형태로 저장되어 있음
     plt.figure(figsize=(15,5)) # 새로운 그래프 창을 만들고, 크기를 가로 15인치, 세로 5인치로 설정
     plt.subplot(121) # 두 개의 그래프를 나란히 표시하기 위해 첫 번째 위치(1행 2열의 첫 번째)에 서브플롯을 생성
@@ -135,7 +138,8 @@ def plot_convolution(t,title=''): # 함수를 정의하고, 두 개의 매개변
         plt.show() # 그래프를 표시
 
 # 주어진 데이터셋에서 이미지를 선택하여 시각화하는 Python 함수 display_dataset을 정의하는데 이미지 데이터셋, 표시할 이미지의 수, 그리고 선택적으로 클래스 레이블을 포함할 수 있음
-
+#######################
+#하면 좋고?
 def display_dataset(dataset, n=10,classes=None): # display_dataset 함수를 정의하며, 매개변수로는 dataset (이미지와 레이블을 포함하는 데이터셋), n (표시할 이미지 수, 기본값은 10), classes (클래스 레이블 이름 배열, 선택적)를 받음
     fig,ax = plt.subplots(1,n,figsize=(15,3)) # 1행 n열의 서브플롯을 생성하고, 전체 그래프의 크기를 가로 15인치, 세로 3인치로 설정
     mn = min([dataset[i][0].min() for i in range(n)]) # 데이터셋에서 선택된 이미지들 중 픽셀 값의 최소값을 계산하는데 값은 이미지 정규화에 사용
@@ -166,7 +170,8 @@ def check_image_dir(path): # check_image_dir라는 이름의 함수를 정의하
 
 # PyTorch의 torchvision 라이브러리를 사용하여 이미지 변환을 위한 일반적인 변환 조합을 설정하는 함수 common_transform을 정의
 # 전이 학습(Transfer Learning)이나 컴퓨터 비전 모델에서 이미지를 전처리할 때 매우 유용한데 이 변환을 사용하면 학습 데이터와 테스트 데이터를 모델이 기대하는 형식으로 일관되게 처리할 수 있음
-
+#################
+# 쓸수도 있을거 같다
 def common_transform(): # common_transform이라는 이름의 함수를 정의하는데 이 함수는 매개변수를 받지 않고, 구성된 이미지 변환 파이프라인을 반환
     std_normalize = torchvision.transforms.Normalize(mean=[0.485, 0.456, 0.406],
                           std=[0.229, 0.224, 0.225]) # torchvision.transforms.Normalize 함수를 사용하여 이미지의 각 채널에 대한 정규화를 설정하는데 이 변환은 주어진 평균(mean)과 표준편차(std)를 사용하여 각 채널의 픽셀 값을 정규화하는데 이 값들은 일반적으로 ImageNet 데이터셋을 기준으로 한 통계값
@@ -176,7 +181,7 @@ def common_transform(): # common_transform이라는 이름의 함수를 정의�
             torchvision.transforms.ToTensor(), # 이미지 데이터를 PyTorch 텐서로 변환하고, 데이터 타입을 0에서 1 사이의 값으로 스케일링
             std_normalize]) # 정규화 변환을 적용
     return trans # 구성된 변환 파이프라인을 반환
-
+# 안쓴다
 # 개와 고양이의 이미지 데이터셋을 불러오고, 처리하여 학습 및 테스트 데이터셋으로 분할하는 Python 함수 load_cats_dogs_dataset를 정의하는데 함수는 데이터셋을 압축 해제하고, 이미지를 검사하며, 데이터를 분할하고, 로더를 설정하는 여러 단계로 구성
 
 def load_cats_dogs_dataset(): # load_cats_dogs_dataset라는 이름의 함수를 정의합니다. 이 함수는 매개변수를 받지 않음
